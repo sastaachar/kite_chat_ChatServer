@@ -5,10 +5,8 @@ const PORT = process.env.PORT || 2500;
 //importing packages
 const express = require("express");
 const os = require("os");
-const mongoose = require("mongoose");
 const cors = require("cors");
 const http = require("http");
-const cookieParser = require("cookie-parser");
 const socketio = require("socket.io");
 
 //remove all this stupidity from here and port these to the new server
@@ -16,9 +14,7 @@ const socketio = require("socket.io");
 //we need to use http here for socket.io
 const app = express();
 const server = http.createServer(app);
-const io = socketio(server, {
-  origins: "localhost:3000* http://localhost:3000:* http://localhost:3000*",
-});
+const io = socketio(server);
 
 io.use((socket, next) => {
   try {
@@ -38,15 +34,15 @@ io.use((socket, next) => {
       throw new Error("Auth fail");
     }
   } catch (err) {
+    console.log(`User is NOT allowed`);
     next(err);
   }
-}).on("connection", (socket) => {
-  //console.log(socket.handshake);
+});
+io.on("connection", (socket) => {
+  socket.emit("connected", "User authorized and connected");
+  console.log("New connection");
   console.log(socket.connected);
 });
-
-//middlewares
-app.use(cookieParser());
 
 var whitelist = ["http://localhost:3000", "https://kite-chat.herokuapp.com"];
 var corsOptions = {
@@ -79,12 +75,6 @@ app.use(express.json());
 
 //Routes
 app.use("/", require("./routes/main"));
-app.use("/users", require("./routes/users"));
-
-app.use("/socket.io", (req, res) => {
-  console.log("thos called");
-  req.header("Access-Control-Allow-Origin", "localhost:3000");
-});
 
 //start listening
 server.listen(PORT, () => {
