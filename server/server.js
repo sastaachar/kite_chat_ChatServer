@@ -34,6 +34,7 @@ io.use((socket, next) => {
       throw new Error("Auth fail");
     }
   } catch (err) {
+    console.log(err);
     console.log(`User is NOT allowed`);
     next(err);
   }
