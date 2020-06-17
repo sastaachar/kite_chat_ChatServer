@@ -29,7 +29,7 @@ const io = socketio(server, {
 io.use((socket, next) => {
   try {
     let cookies = socket.handshake.headers.auth;
-    console.log(socket.handshake);
+    console.log("HEADER auth : " + socket.handshake.headers.auth);
     //split and parse the cookies
     let cookieObj = {};
     cookies.split(";").map((cookie) => {
@@ -37,7 +37,7 @@ io.use((socket, next) => {
       cookieObj[key_value[0].trim()] = key_value[1];
     });
     console.log(cookieObj);
-    if (cookieObj.sasachid_tk) {
+    if (socket.handshake.headers.auth) {
       console.log(`User ${cookieObj.sasachid_un} allowed`);
       next();
     } else {
