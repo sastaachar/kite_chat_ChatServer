@@ -14,12 +14,22 @@ const socketio = require("socket.io");
 //we need to use http here for socket.io
 const app = express();
 const server = http.createServer(app);
-const io = socketio(server);
+const io = socketio(server, {
+  handlePreflightRequest: (req, res) => {
+    const headers = {
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, Auth",
+      "Access-Control-Allow-Origin": "http://localhost:3000", //or the specific origin you want to give access to,
+      "Access-Control-Allow-Credentials": true,
+    };
+    res.writeHead(200, headers);
+    res.end();
+  },
+});
 
 io.use((socket, next) => {
   try {
     let cookies = socket.handshake.headers.cookie;
-    console.log(socket.handshake.headers);
+    console.log(socket.handshake);
     //split and parse the cookies
     let cookieObj = {};
     cookies.split(";").map((cookie) => {
