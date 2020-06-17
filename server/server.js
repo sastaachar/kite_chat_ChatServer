@@ -6,14 +6,14 @@ const PORT = process.env.PORT || 2500;
 const express = require("express");
 const os = require("os");
 const cors = require("cors");
-const https = require("https");
+const http = require("http");
 const socketio = require("socket.io");
 
 //remove all this stupidity from here and port these to the new server
 //crearte server using http
 //we need to use http here for socket.io
 const app = express();
-const server = https.createServer(app);
+const server = http.createServer(app);
 const io = socketio(server);
 
 io.use((socket, next) => {
