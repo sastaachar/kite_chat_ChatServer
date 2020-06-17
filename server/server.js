@@ -26,7 +26,7 @@ io.use((socket, next) => {
       let key_value = cookie.split("=");
       cookieObj[key_value[0].trim()] = key_value[1];
     });
-
+    console.log(cookieObj);
     if (cookieObj.sasachid_tk) {
       console.log(`User ${cookieObj.sasachid_un} allowed`);
       next();
