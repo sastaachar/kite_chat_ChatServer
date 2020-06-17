@@ -28,7 +28,7 @@ const io = socketio(server, {
 
 io.use((socket, next) => {
   try {
-    let cookies = socket.handshake.headers.cookie;
+    let cookies = socket.handshake.headers.auth;
     console.log(socket.handshake);
     //split and parse the cookies
     let cookieObj = {};
