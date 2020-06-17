@@ -19,7 +19,7 @@ const io = socketio(server);
 io.use((socket, next) => {
   try {
     let cookies = socket.handshake.headers.cookie;
-
+    console.log(socket.handshake.headers);
     //split and parse the cookies
     let cookieObj = {};
     cookies.split(";").map((cookie) => {
