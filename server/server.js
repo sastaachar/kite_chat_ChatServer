@@ -8,6 +8,7 @@ const os = require("os");
 const cors = require("cors");
 const http = require("http");
 const socketio = require("socket.io");
+const jwt = require("jsonwebtoken");
 
 //remove all this stupidity from here and port these to the new server
 //crearte server using http
@@ -17,7 +18,7 @@ const server = http.createServer(app);
 const io = socketio(server, {
   handlePreflightRequest: (req, res) => {
     const headers = {
-      "Access-Control-Allow-Headers": "Content-Type, Authorization, Auth",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
       "Access-Control-Allow-Origin": "http://localhost:3000", //or the specific origin you want to give access to,
       "Access-Control-Allow-Credentials": true,
     };
@@ -26,19 +27,22 @@ const io = socketio(server, {
   },
 });
 
+const checkToken = (token, key) => {
+  try {
+    let payload = jwt.verify(token, key);
+    return payload;
+  } catch (err) {
+    return false;
+  }
+};
+
 io.use((socket, next) => {
   try {
-    let cookies = socket.handshake.headers.auth;
-    console.log("HEADER auth : " + socket.handshake.headers.auth);
-    //split and parse the cookies
-    let cookieObj = {};
-    cookies.split(";").map((cookie) => {
-      let key_value = cookie.split("=");
-      cookieObj[key_value[0].trim()] = key_value[1];
-    });
-    console.log(cookieObj);
-    if (socket.handshake.headers.auth) {
-      console.log(`User ${cookieObj.sasachid_un} allowed`);
+    let jwtToken = socket.handshake.headers.authorization;
+    jwtToken = jwtToken.split(" ")[1];
+    let payload = checkToken(jwtToken, process.env.JWT_KEY);
+    if (payload) {
+      console.log(`User ${payload.userName} allowed.`);
       next();
     } else {
       throw new Error("Auth fail");
