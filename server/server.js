@@ -8,7 +8,8 @@ const os = require("os");
 const cors = require("cors");
 const http = require("http");
 const socketio = require("socket.io");
-const jwt = require("jsonwebtoken");
+const { authCheck } = require("./socketioUtils");
+const { addUser, removeUser } = require("./userData");
 
 //remove all this stupidity from here and port these to the new server
 //crearte server using http
@@ -30,36 +31,20 @@ const io = socketio(server, {
   },
 });
 
-const checkToken = (token, key) => {
+io.use(authCheck).on("connection", (socket) => {
+  const { userName } = socket.handshake.headers;
+  //if user is not already connected
   try {
-    let payload = jwt.verify(token, key);
-    return payload;
+    addUser({ userName, socketId: socket.id });
+    socket.emit("connected", "User authorized and connected");
   } catch (err) {
-    return false;
+    socket.emit("disconnected", err.message);
+    socket.disconnect();
   }
-};
 
-io.use((socket, next) => {
-  try {
-    let jwtToken = socket.handshake.headers.authorization;
-    jwtToken = jwtToken.split(" ")[1];
-    let payload = checkToken(jwtToken, process.env.JWT_KEY);
-    if (payload) {
-      console.log(`User ${payload.userName} allowed.`);
-      next();
-    } else {
-      throw new Error("Auth fail");
-    }
-  } catch (err) {
-    console.log(err);
-    console.log(`User is NOT allowed`);
-    next(err);
-  }
-});
-io.on("connection", (socket) => {
-  socket.emit("connected", "User authorized and connected");
-  console.log("New connection");
-  console.log(socket.connected);
+  socket.on("disconnect", (socket) => {
+    removeUser(userName);
+  });
 });
 
 var whitelist = ["http://localhost:3000", "https://kite-chat.herokuapp.com"];
