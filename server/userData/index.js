@@ -17,10 +17,24 @@ const addUser = ({ userName, socketId }) => {
     //already connected to a socket
     throw new Error("User already connected to scoket.");
   } else {
+    console.log(connectedUsers);
     connectedUsers[userName] = socketId;
   }
   return true;
 };
 
+//this will send user the online friends from the list of friends
+const getOnline = (friendList) =>
+  friendList.filter((friend) => userConected(friend));
+
+const getSocketID = (userName) => connectedUsers[userName];
+
 const removeUser = (user) => delete connectedUsers[user];
-module.exports = { getUserIds, addUser, removeUser, userConected };
+module.exports = {
+  getUserIds,
+  addUser,
+  removeUser,
+  userConected,
+  getOnline,
+  getSocketID,
+};

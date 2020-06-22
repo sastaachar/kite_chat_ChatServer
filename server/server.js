@@ -9,11 +9,13 @@ const cors = require("cors");
 const http = require("http");
 const socketio = require("socket.io");
 const { authCheck } = require("./socketioUtils");
-const { addUser, removeUser } = require("./userData");
+const { addUser, removeUser, getOnline, getSocketID } = require("./userData");
 
 //remove all this stupidity from here and port these to the new server
 //crearte server using http
 //we need to use http here for socket.io
+
+//-add origin in options
 const app = express();
 const server = http.createServer(app);
 const io = socketio(server, {
@@ -31,22 +33,49 @@ const io = socketio(server, {
   },
 });
 
-io.use(authCheck).on("connection", (socket) => {
-  const { userName } = socket.handshake.headers;
-  //if user is not already connected
-  try {
-    addUser({ userName, socketId: socket.id });
-    socket.emit("connected", "User authorized and connected");
-  } catch (err) {
-    socket.emit("disconnected", err.message);
-    socket.disconnect();
-  }
+try {
+  io.use(authCheck).on("connection", (socket) => {
+    const { userName } = socket.handshake.headers;
+    //if user is not already connected
+    try {
+      addUser({ userName, socketId: socket.id });
+      socket.emit("connected", "User authorized and connected");
+    } catch (err) {
+      socket.emit("disconnected", err.message);
+      socket.disconnect();
+    }
 
-  socket.on("disconnect", (socket) => {
-    removeUser(userName);
+    socket.on("onlineFriendList", (friendList, cb) => {
+      //notify all friends here
+      //this method could be way better
+      let onlineFriends = getOnline(friendList);
+
+      //storing the friends list associated with each socket
+      socket["_friendList"] = friendList;
+      //notifyAll
+      console.log(friendList);
+      onlineFriends.forEach((friend) => {
+        console.log(" conn ", userName, " tel ", friend);
+        io.to(getSocketID(friend)).emit("friendConnected", { userName });
+      });
+      cb({ onlineFriends });
+    });
+
+    socket.on("disconnect", () => {
+      //notifyFriends about this
+      //notifyAll
+      socket["_friendList"].forEach((friend) => {
+        console.log(" dis ", userName, " tel ", friend);
+        io.to(getSocketID(friend)).emit("friendDisconnected", {
+          userName,
+        });
+      });
+      removeUser(userName);
+    });
   });
-});
-
+} catch (err) {
+  console.log(err.message);
+}
 var whitelist = ["http://localhost:3000", "https://kite-chat.herokuapp.com"];
 var corsOptions = {
   origin: function (origin, callback) {
@@ -81,7 +110,7 @@ app.use("/", require("./routes/main"));
 
 //start listening
 server.listen(PORT, () => {
-  console.log(`Server running at - ${os.hostname()} on PORT : ${PORT}`);
+  console.log(`Chat Server running at - ${os.hostname()} on PORT : ${PORT}`);
 });
 
 module.exports = {
