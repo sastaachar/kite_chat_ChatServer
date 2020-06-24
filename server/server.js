@@ -40,6 +40,7 @@ try {
     try {
       addUser({ userName, socketId: socket.id });
       socket.emit("connected", "User authorized and connected");
+      socket["_friendList"] = [];
     } catch (err) {
       socket.emit("disconnected", err.message);
       socket.disconnect();
@@ -59,6 +60,16 @@ try {
         io.to(getSocketID(friend)).emit("friendConnected", { userName });
       });
       cb({ onlineFriends });
+    });
+
+    //client1 --> server --> client2
+    socket.on("SEND_MESSAGE", ({ sender, receiver, content }, cb) => {
+      let socketId = getSocketID(receiver);
+      if (socketId) {
+        io.to(socketId).emit("RECV_MESSAGE", { sender, content });
+      } else {
+        console.log(receiver, " not online");
+      }
     });
 
     socket.on("disconnect", () => {

@@ -1,6 +1,11 @@
 //will be using redis here
 const connectedUsers = {};
 
+//used for admin panel
+const getAllOnline = () => {
+  return Object.keys(connectedUsers);
+};
+
 const getUserIds = (users) => {
   let onlineUsers = [];
   users.forEach((user) => {
@@ -37,4 +42,5 @@ module.exports = {
   userConected,
   getOnline,
   getSocketID,
+  getAllOnline,
 };
