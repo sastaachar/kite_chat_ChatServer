@@ -67,8 +67,6 @@ try {
       let socketId = getSocketID(receiver);
       if (socketId) {
         io.to(socketId).emit("RECV_MESSAGE", { sender, content });
-      } else {
-        console.log(receiver, " not online");
       }
     });
 
@@ -82,6 +80,14 @@ try {
         });
       });
       removeUser(userName);
+    });
+
+    //friend request
+    socket.on("UPDATE_USER_DETAIL", ({ sender, receiver }) => {
+      let socketId = getSocketID(receiver);
+      if (socketId) {
+        io.to(socketId).emit("UPDATE_USER_DETAIL", { sender });
+      }
     });
   });
 } catch (err) {
